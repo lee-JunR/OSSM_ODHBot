@@ -15,11 +15,14 @@ dotenv_file = find_dotenv()
 load_dotenv(dotenv_file)
 
 # API 엔드포인트 URL 설정
-WAS_ADDRESS = "http://" + os.environ["WAS_HOST"] + ':' + os.environ["WAS_PORT"] + "/recommend/"
+WAS_ADDRESS = "http://" + os.environ["WAS_HOST"] + ':' + os.environ["WAS_PORT"]
 
-STANDARD_RECOMMENDATION_URL = WAS_ADDRESS + "standard"
-QUICK_RECOMMENDATION_URL = WAS_ADDRESS + "quick"
-RANDOM_RECOMMENDATION_URL = WAS_ADDRESS + "random"
+STANDARD_RECOMMENDATION_URL = WAS_ADDRESS + "/recommend/" + "standard"
+QUICK_RECOMMENDATION_URL = WAS_ADDRESS + "/recommend/" + "quick"
+RANDOM_RECOMMENDATION_URL = WAS_ADDRESS + "/recommend/" + "random"
+WEEKLY_RANKING_URL = WAS_ADDRESS + "/rank/weekly"
+MONTHLY_RANKING_URL =  WAS_ADDRESS + "/rank/monthly"
+
 
 headers = {'Content-Type': 'application/json'}
 
@@ -133,6 +136,40 @@ async def mkselect(interaction: discord.Interaction):
 
 
 
+
+@bot.tree.command(name="주간랭킹", description="주간랭킹을 확인하세요!")
+async def 주간랭킹(interaction: discord.Interaction):
+    # 주간랭킹은 input 데이터 없음
+    payload = {}
+
+    try:
+        response = requests.get(WEEKLY_RANKING_URL, data=json.dumps(payload), headers=headers)
+        response.raise_for_status()  # 2xx 코드가 아닌 경우 예외 발생
+        result = response.json()
+        print(result)
+        embed = discord.Embed(title = "주간 랭킹", description = '주간 랭킹을 확인하세요!', color=discord.Color.random())
+        for title, value in result.items():
+            embed.add_field(name = title, value = "%d회 검색" %value, inline=False)
+        await interaction.response.send_message(embed = embed)
+    except requests.exceptions.RequestException as e:
+        await interaction.response.send_message(f"API 호출 실패: {e}")
+
+@bot.tree.command(name="월간랭킹", description="월간 랭킹을 확인하세요!")
+async def 월간랭킹(interaction: discord.Interaction):
+    # 월간랭킹은 input 데이터 없음
+    payload = {}
+
+    try:
+        response = requests.get(MONTHLY_RANKING_URL, data=json.dumps(payload), headers=headers)
+        response.raise_for_status()  # 2xx 코드가 아닌 경우 예외 발생
+        result = response.json()
+        print(result)
+        embed = discord.Embed(title = "월간 랭킹", description = '월간 랭킹을 확인하세요!', color=discord.Color.random())
+        for title, value in result.items():
+            embed.add_field(name = title, value = "%d회 검색" %value, inline=False)
+        await interaction.response.send_message(embed = embed)
+    except requests.exceptions.RequestException as e:
+        await interaction.response.send_message(f"API 호출 실패: {e}")
 
 # 봇 실행
 
