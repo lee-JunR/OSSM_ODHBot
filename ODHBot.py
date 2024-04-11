@@ -52,23 +52,9 @@ async def on_ready():  # 봇 실행 시 실행되는 함수
         print(e)
 
 
-# @bot.command(help="랜덤으로 애니메이션 추천을 받습니다.")
-# async def 랜덤추천(ctx):
-#     # 랜덤 추천은 input 데이터 없음
-#     payload = {}
-#
-#     try:
-#         response = requests.post(RANDOM_RECOMMENDATION_URL, data=json.dumps(payload), headers=headers)
-#         response.raise_for_status()  # 2xx 코드가 아닌 경우 예외 발생
-#         titles = [item["title"] for item in response.json()]
-#         print(titles)
-#         await ctx.send(embed=create_embed(titles))
-#     except requests.exceptions.RequestException as e:
-#         await ctx.send(f"API 호출 실패: {e}")
-
 @bot.tree.command(name='hello')
 async def hello(interaction: discord.Interaction):
-    await interaction.response.send_message(f"Hey {interaction.user.mention}! This is a slash command!", ephemeral=True)
+    await interaction.response.send_message(f"Hey {interaction.user.mention}! This is a slash c제ommand!", ephemeral=True)
 
 
 @bot.tree.command(name="랜덤추천", description="랜덤으로 애니메이션 추천을 받습니다.")
