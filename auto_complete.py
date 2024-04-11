@@ -7,7 +7,8 @@ import redis
 dotenv_file = find_dotenv()
 load_dotenv(dotenv_file)
 
-rd = redis.StrictRedis(host=os.environ["REDIS_HOST"], port=os.environ["REDIS_PORT"], db=0, password=os.environ["REDIS_PWD"])
+rd = redis.StrictRedis(host=os.environ["REDIS_HOST"], port=os.environ["REDIS_PORT"], db=0,
+                       password=os.environ["REDIS_PWD"])
 
 """문자에서 *표를 제거한다."""
 
@@ -46,6 +47,7 @@ def auto_complete(search_word):
     Returns:
         list: 검색어와 일치하는 자동완성 제안들의 리스트입니다.
     """
+
     def mapper(candidates):
         """
         후보 문자열이 검색어로 시작하고 '*'로 끝나는지 확인합니다.
@@ -66,3 +68,5 @@ def auto_complete(search_word):
     result2 = list(map(delete_star, results1))
 
     return result2
+
+

@@ -21,8 +21,7 @@ STANDARD_RECOMMENDATION_URL = WAS_ADDRESS + "/recommend/" + "standard"
 QUICK_RECOMMENDATION_URL = WAS_ADDRESS + "/recommend/" + "quick"
 RANDOM_RECOMMENDATION_URL = WAS_ADDRESS + "/recommend/" + "random"
 WEEKLY_RANKING_URL = WAS_ADDRESS + "/rank/weekly"
-MONTHLY_RANKING_URL =  WAS_ADDRESS + "/rank/monthly"
-
+MONTHLY_RANKING_URL = WAS_ADDRESS + "/rank/monthly"
 
 headers = {'Content-Type': 'application/json'}
 
@@ -39,7 +38,7 @@ def create_embed(anime_list):
     long_string = "\n".join(anime_list)
     print("create_embed")
     print(long_string)
-    embed = discord.Embed(title="이거 추천", description=long_string, color=0x62c1cc)
+    embed = discord.Embed(title=" 와타시도 애니메이션을 좋아하는 오덕이니까.. 좋은 애니를 추천해주지.", description=long_string, color=0x62c1cc)
     return embed
 
 
@@ -47,7 +46,7 @@ def create_embed(anime_list):
 async def on_ready():  # 봇 실행 시 실행되는 함수
     print(f'{bot.user} 에 로그인하였습니다!')
     try:
-        synced = await bot.tree.sync()
+        synced = await bot.tree.sync()  # 봇 실행시 활성화된 Slash Command의 개수를 출력해주는 기능
         print(f"Synced {len(synced)} command(s)")
     except Exception as e:
         print(e)
@@ -98,7 +97,8 @@ class MySelect(discord.ui.Select):
             anime = anime_list[i]
             option = discord.SelectOption(label=anime, value=anime, description=f"이것은 {anime}에 대한 옵션입니다!")
             options.append(option)
-        super().__init__(placeholder="정확한 애니메이션명을 선택해주세요.", min_values=1, max_values=1, options=options)
+        super().__init__(placeholder="후보작들을 꼼꼼히 심사하시고, 당신의 운명을 결정할 최고의 애니메이션을 선택해주세요! 훗훗훗...", min_values=1,
+                         max_values=1, options=options)
 
     async def callback(self, interaction: discord.Interaction):
         payload = {'input': self.values[0]}
@@ -118,7 +118,8 @@ class MySelect(discord.ui.Select):
 async def 퀵추천(interaction: discord.Interaction, anime: str):
     view = discord.ui.View()
     view.add_item(MySelect(anime))
-    await interaction.response.send_message("애니메이션 이름을 선택해 주세요!", view=view)
+    await interaction.response.send_message("호오, 애니메이션 이름 선택이라니, 이건 굉장히 중요한 문제인데! 혹시 어떤 애니메이션을 좋아하는지 알려줄 수 있겠니?",
+                                            view=view)
 
 
 @bot.tree.command(name="select", description="select 만들기")
@@ -128,6 +129,7 @@ async def mkselect(interaction: discord.Interaction):
     select.add_option(label="잘가", value=2, description="설명2")
     view = discord.ui.View()
     view.add_item(select)
+
     async def select_callback(interaction: discord.Interaction):
         await interaction.response.send_message(select.values[0])
 
@@ -135,7 +137,36 @@ async def mkselect(interaction: discord.Interaction):
     await interaction.response.send_message(view=view)
 
 
+class MyModal(discord.ui.Modal, title="오오, 5개의 애니메이션 이름을 알려준다고?"):
+    input1 = (discord.ui.TextInput(label="애니메이션 이름을 알려주게나.", placeholder=f"1번 애니메이션 이름", style=discord.TextStyle.short))
+    input2 = (discord.ui.TextInput(label="애니메이션 이름을 알려주게나.", placeholder=f"2번 애니메이션 이름", style=discord.TextStyle.short))
+    input3 = (discord.ui.TextInput(label="애니메이션 이름을 알려주게나.", placeholder=f"3번 애니메이션 이름", style=discord.TextStyle.short))
+    input4 = (discord.ui.TextInput(label="애니메이션 이름을 알려주게나.", placeholder=f"3번 애니메이션 이름", style=discord.TextStyle.short))
+    input5 = (discord.ui.TextInput(label="애니메이션 이름을 알려주게나.", placeholder=f"3번 애니메이션 이름", style=discord.TextStyle.short))
 
+    async def on_submit(self, interaction: discord.Interaction):
+        input = []
+        input.append(auto_complete(self.input1.value)[0])
+        input.append(auto_complete(self.input2.value)[0])
+        input.append(auto_complete(self.input3.value)[0])
+        input.append(auto_complete(self.input4.value)[0])
+        input.append(auto_complete(self.input5.value)[0])
+
+        payload = {'input1': input[0], 'input2': input[1], 'input3': input[2], 'input4': input[3], 'input5': input[4]}
+        print("payload: " + str(payload))
+        try:
+            response = requests.post(STANDARD_RECOMMENDATION_URL, data=json.dumps(payload), headers=headers)
+            response.raise_for_status()  # HTTP 응답 코드가 2xx가 아닌 경우 예외 발생
+            titles = [item["title"] for item in response.json()]
+            print("api response")
+            print(titles)
+            await interaction.response.send_message(embed=create_embed(titles))
+        except requests.exceptions.RequestException as e:
+            await interaction.response.send_message(discord.Embed(title=f"API 호출 실패: {payload}", description=e))
+
+@bot.tree.command(name="기본추천", description="5개의 애니메이션 이름으로 조금 더 취향에 맞는 추천을 받습니다. 사용법: !기본추천")
+async def 기본추천(interaction: discord.Interaction):
+    await interaction.response.send_modal(MyModal())
 
 @bot.tree.command(name="주간랭킹", description="주간랭킹을 확인하세요!")
 async def 주간랭킹(interaction: discord.Interaction):
@@ -147,12 +178,13 @@ async def 주간랭킹(interaction: discord.Interaction):
         response.raise_for_status()  # 2xx 코드가 아닌 경우 예외 발생
         result = response.json()
         print(result)
-        embed = discord.Embed(title = "주간 랭킹", description = '주간 랭킹을 확인하세요!', color=discord.Color.random())
+        embed = discord.Embed(title="주간 랭킹", description='주간 랭킹을 확인하세요!', color=discord.Color.random())
         for title, value in result.items():
-            embed.add_field(name = title, value = "%d회 검색" %value, inline=False)
-        await interaction.response.send_message(embed = embed)
+            embed.add_field(name=title, value="%d회 검색" % value, inline=False)
+        await interaction.response.send_message(embed=embed)
     except requests.exceptions.RequestException as e:
         await interaction.response.send_message(f"API 호출 실패: {e}")
+
 
 @bot.tree.command(name="월간랭킹", description="월간 랭킹을 확인하세요!")
 async def 월간랭킹(interaction: discord.Interaction):
@@ -164,12 +196,13 @@ async def 월간랭킹(interaction: discord.Interaction):
         response.raise_for_status()  # 2xx 코드가 아닌 경우 예외 발생
         result = response.json()
         print(result)
-        embed = discord.Embed(title = "월간 랭킹", description = '월간 랭킹을 확인하세요!', color=discord.Color.random())
+        embed = discord.Embed(title="월간 랭킹", description='월간 랭킹을 확인하세요!', color=discord.Color.random())
         for title, value in result.items():
-            embed.add_field(name = title, value = "%d회 검색" %value, inline=False)
-        await interaction.response.send_message(embed = embed)
+            embed.add_field(name=title, value="%d회 검색" % value, inline=False)
+        await interaction.response.send_message(embed=embed)
     except requests.exceptions.RequestException as e:
         await interaction.response.send_message(f"API 호출 실패: {e}")
+
 
 # 봇 실행
 

@@ -137,3 +137,15 @@ async def mkselect(interaction: discord.Interaction):
 # 봇 실행
 
 bot.run(BOT_TOKEN)
+class MyModal():
+
+    input1 = 1
+    input2 = 2
+    input3 = 3
+    input4 = 4
+    input5 = 5
+    def on_submit(self):
+        a = dir(self)
+        print(locals())
+a = MyModal()
+a.on_submit
